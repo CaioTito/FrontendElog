@@ -1,6 +1,12 @@
 <template>
+  <div style="padding: 10px 0;">
+    <v-container style="background-color: #e0e0e0;" class="px-4">
+      <span style="font-size: 1.25rem; font-weight: 500;">TESTE TÉCNICO - BIGCORE</span>
+    </v-container>
+  </div>
+
   <v-container>
-    <div class="d-flex align-center mb-4">
+    <div class="d-flex align-center mb-4 mt-2">
       <span style="font-size: 1.5rem; font-weight: 500;">Consulta Hodômetro</span>
       <v-btn variant="text" class="ml-2" @click="showFilter = true">
         <v-icon color="black">mdi-filter</v-icon>
@@ -28,71 +34,74 @@
 
     {{ console.log('Valor de footer-props sendo passado:', { itemsPerPageOptions: [10, 25, 50, 100], showFirstLastPage: true, showCurrentPage: true }) }}
 
-    <v-data-table
-      :items="data"
-      :headers="headers"
-      :items-length="totalItems"
-      v-model:options="tableOptions"
-      :items-per-page="tableOptions.itemsPerPage"
-      :loading="loading"
-    >
-      <template #loading>
-        <v-skeleton-loader
-          v-for="n in 5"
-          :key="n"
-          type="table-row"
-          class="my-2"
-        />
-      </template>
+    <v-card elevation="2">
+      <v-data-table
+        :items="data"
+        :headers="headers"
+        :items-length="totalItems"
+        v-model:options="tableOptions"
+        :items-per-page="tableOptions.itemsPerPage"
+        :loading="loading"
+        class="odometer-table"
+      >
+        <template #loading>
+          <v-skeleton-loader
+            v-for="n in 5"
+            :key="n"
+            type="table-row"
+            class="my-2"
+          />
+        </template>
 
-      <template #item.moving="{ item }">
-        <span>{{ item.moving ? 'Em movimento' : 'Parado' }}</span>
-      </template>
+        <template #item.moving="{ item }">
+          <span>{{ item.moving ? 'Em movimento' : 'Parado' }}</span>
+        </template>
 
-      <template #item.dateProcess="{ item }">
-        <span>{{ formatDate(item.dateProcess) }}</span>
-      </template>
+        <template #item.dateProcess="{ item }">
+          <span>{{ formatDate(item.dateProcess) }}</span>
+        </template>
 
-      <template #bottom>
-        <v-row class="pa-2">
-          <v-col cols="12" md="4">
-            <div class="d-flex align-center justify-start">
-              <span class="">Items per page:</span>
-              <v-select
-                v-model="tableOptions.itemsPerPage"
-                :items="[10, 25, 50, 100]"
+        <template #bottom>
+          <v-row class="pa-2">
+            <v-col cols="12" md="4">
+              <div class="d-flex align-center justify-start">
+                <span class="">Items per page:</span>
+                <v-select
+                  v-model="tableOptions.itemsPerPage"
+                  :items="[10, 25, 50, 100]"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="ml-2"
+                  style="width: 80px;"
+                  @update:modelValue="newValue => {
+                    console.log('Handler Select - novo valor recebido:', newValue);
+                    tableOptions.itemsPerPage = newValue;
+                    console.log('Handler Select - tableOptions.itemsPerPage após setar:', tableOptions.itemsPerPage);
+                  }"
+                ></v-select>
+              </div>
+            </v-col>
+            <v-col cols="12" md="4" class="d-flex align-center justify-center">
+              <span class="">{{ totalItems === 0 ? '0-0 of 0' : `${(tableOptions.page - 1) * tableOptions.itemsPerPage + 1}-${Math.min(tableOptions.page * tableOptions.itemsPerPage, totalItems)} of ${totalItems}` }}</span>
+            </v-col>
+            <v-col cols="12" md="4" class="d-flex align-center justify-end">
+              <v-pagination
+                v-model="tableOptions.page"
+                :length="Math.ceil(totalItems / tableOptions.itemsPerPage)"
+                :total-visible="5"
                 density="compact"
-                variant="outlined"
-                hide-details
-                class="ml-2"
-                style="width: 80px;"
-                @update:modelValue="newValue => {
-                  console.log('Handler Select - novo valor recebido:', newValue);
-                  tableOptions.itemsPerPage = newValue;
-                  console.log('Handler Select - tableOptions.itemsPerPage após setar:', tableOptions.itemsPerPage);
+                @update:modelValue="newPage => {
+                  console.log('Handler Pagination - novo valor recebido:', newPage);
+                  tableOptions.page = newPage;
+                  console.log('Handler Pagination - tableOptions.page após setar:', tableOptions.page);
                 }"
-              ></v-select>
-            </div>
-          </v-col>
-          <v-col cols="12" md="4" class="d-flex align-center justify-center">
-            <span class="">{{ totalItems === 0 ? '0-0 of 0' : `${(tableOptions.page - 1) * tableOptions.itemsPerPage + 1}-${Math.min(tableOptions.page * tableOptions.itemsPerPage, totalItems)} of ${totalItems}` }}</span>
-          </v-col>
-          <v-col cols="12" md="4" class="d-flex align-center justify-end">
-            <v-pagination
-              v-model="tableOptions.page"
-              :length="Math.ceil(totalItems / tableOptions.itemsPerPage)"
-              :total-visible="5"
-              density="compact"
-              @update:modelValue="newPage => {
-                console.log('Handler Pagination - novo valor recebido:', newPage);
-                tableOptions.page = newPage;
-                console.log('Handler Pagination - tableOptions.page após setar:', tableOptions.page);
-              }"
-            ></v-pagination>
-          </v-col>
-        </v-row>
-      </template>
-    </v-data-table>
+              ></v-pagination>
+            </v-col>
+          </v-row>
+        </template>
+      </v-data-table>
+    </v-card>
   </v-container>
 </template>
 
@@ -226,3 +235,60 @@ onMounted(() => {
   fetchData(); // Fetch data after loading headers
 })
 </script>
+
+<style scoped>
+.odometer-table :deep(table) {
+  border-collapse: collapse; /* Ensure borders touch */
+}
+
+/* Styles for both header and body cells */
+.odometer-table :deep(th),
+.odometer-table :deep(td) {
+  border: 1px solid black !important; /* Black border */
+  min-height: 0px !important; /* Explicitly remove minimum height */
+  vertical-align: middle !important; /* Center content vertically */
+  /* Remove shared line-height here, define in specific rules */
+  /* Remove shared padding/height here, define in specific rules */
+}
+
+/* Styles specifically for header cells */
+.odometer-table :deep(thead th) {
+  background-color: #e0e0e0; /* Fundo cinza claro */
+  font-weight: bold !important; /* Texto em negrito - make sure it's applied */
+  font-size: 0.7rem !important; /* Fonte menor */
+  padding-top: 2px !important; /* Reduced padding */
+  padding-bottom: 2px !important; /* Reduced padding */
+  line-height: 1.1 !important; /* Reduced line height */
+  height: 24px !important; /* Explicit height */
+  white-space: nowrap !important; /* Prevent text wrapping */
+}
+
+/* Styles specifically for body cells */
+.odometer-table :deep(tbody td) {
+  font-size: 0.7rem !important; /* Fonte menor para células de dados */
+  padding-top: 2px !important; /* Reduced padding */
+  padding-bottom: 2px !important; /* Reduced padding */
+  line-height: 1.1 !important; /* Reduced line height */
+  height: 24px !important; /* Explicit height */
+  white-space: nowrap !important; /* Prevent text wrapping */
+}
+
+/* Specific column widths to prevent wrapping */
+.odometer-table :deep(th[role="columnheader"][aria-label*="Motorista"]),
+.odometer-table :deep(td[data-label="driverName"]) {
+  min-width: 150px !important; /* Example width for Motorista */
+}
+
+.odometer-table :deep(th[role="columnheader"][aria-label*="Processamento"]),
+.odometer-table :deep(td[data-label="dateProcess"]) {
+  min-width: 130px !important; /* Example width for Data de Processamento */
+}
+
+.odometer-table :deep(th[role="columnheader"][aria-label*="Veículo"]),
+.odometer-table :deep(td[data-label="moving"]) {
+  min-width: 100px !important; /* Example width for Status Veículo */
+}
+
+/* Add more specific rules for other columns as needed */
+
+</style>
