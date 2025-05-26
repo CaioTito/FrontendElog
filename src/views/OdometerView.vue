@@ -63,17 +63,18 @@
 
         <template #bottom>
           <v-row class="pa-2">
-            <v-col cols="12" md="4">
+            <v-spacer></v-spacer>
+            <v-col cols="auto" md="auto" class="d-flex align-center">
               <div class="d-flex align-center justify-start">
-                <span class="">Items per page:</span>
+                <span class="">Registros por página:</span>
                 <v-select
                   v-model="tableOptions.itemsPerPage"
-                  :items="[10, 25, 50, 100]"
+                  :items="[10, 15, 20]"
                   density="compact"
                   variant="outlined"
                   hide-details
-                  class="ml-2"
-                  style="width: 80px;"
+                  class="ml-2 pagination-select"
+                  style="width: 50px; min-width: 50px;"
                   @update:modelValue="newValue => {
                     console.log('Handler Select - novo valor recebido:', newValue);
                     tableOptions.itemsPerPage = newValue;
@@ -82,10 +83,10 @@
                 ></v-select>
               </div>
             </v-col>
-            <v-col cols="12" md="4" class="d-flex align-center justify-center">
-              <span class="">{{ totalItems === 0 ? '0-0 of 0' : `${(tableOptions.page - 1) * tableOptions.itemsPerPage + 1}-${Math.min(tableOptions.page * tableOptions.itemsPerPage, totalItems)} of ${totalItems}` }}</span>
+            <v-col cols="auto" md="auto" class="d-flex align-center justify-center pl-4 pr-4">
+              <span class="">{{ totalItems === 0 ? '0-0 de 0' : `${(tableOptions.page - 1) * tableOptions.itemsPerPage + 1}-${Math.min(tableOptions.page * tableOptions.itemsPerPage, totalItems)} de ${totalItems}` }}</span>
             </v-col>
-            <v-col cols="12" md="4" class="d-flex align-center justify-end">
+            <v-col cols="12" md="auto" class="d-flex align-center justify-end">
               <v-pagination
                 v-model="tableOptions.page"
                 :length="Math.ceil(totalItems / tableOptions.itemsPerPage)"
@@ -247,8 +248,9 @@ onMounted(() => {
   border: 1px solid black !important; /* Black border */
   min-height: 0px !important; /* Explicitly remove minimum height */
   vertical-align: middle !important; /* Center content vertically */
-  /* Remove shared line-height here, define in specific rules */
-  /* Remove shared padding/height here, define in specific rules */
+  line-height: 1.1 !important; /* Reduced line height */
+  height: 24px !important; /* Explicit height */
+  white-space: nowrap !important; /* Prevent text wrapping */
 }
 
 /* Styles specifically for header cells */
@@ -256,21 +258,11 @@ onMounted(() => {
   background-color: #e0e0e0; /* Fundo cinza claro */
   font-weight: bold !important; /* Texto em negrito - make sure it's applied */
   font-size: 0.7rem !important; /* Fonte menor */
-  padding-top: 2px !important; /* Reduced padding */
-  padding-bottom: 2px !important; /* Reduced padding */
-  line-height: 1.1 !important; /* Reduced line height */
-  height: 24px !important; /* Explicit height */
-  white-space: nowrap !important; /* Prevent text wrapping */
 }
 
 /* Styles specifically for body cells */
 .odometer-table :deep(tbody td) {
   font-size: 0.7rem !important; /* Fonte menor para células de dados */
-  padding-top: 2px !important; /* Reduced padding */
-  padding-bottom: 2px !important; /* Reduced padding */
-  line-height: 1.1 !important; /* Reduced line height */
-  height: 24px !important; /* Explicit height */
-  white-space: nowrap !important; /* Prevent text wrapping */
 }
 
 /* Specific column widths to prevent wrapping */
@@ -289,6 +281,112 @@ onMounted(() => {
   min-width: 100px !important; /* Example width for Status Veículo */
 }
 
-/* Add more specific rules for other columns as needed */
+.pagination-select :deep(.v-field) {
+  border: 1px solid black !important;
+  border-radius: 0 !important;
+  height: 24px !important;
+  padding: 0 4px !important;
+  box-shadow: none !important;
+  background-color: white !important;
+  min-width: 50px !important;
+}
+
+.pagination-select :deep(.v-select) {
+  min-width: 50px !important;
+}
+
+/* Campo visível */
+.pagination-select :deep(.v-field__input),
+.pagination-select :deep(.v-field__field),
+.pagination-select :deep(.v-select__selection-text) {
+  font-size: 0.7rem !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Ícone da seta */
+.pagination-select :deep(.v-field__append-inner),
+.pagination-select :deep(.v-icon) {
+  padding: 0 !important;
+  margin-left: 0 !important;
+  height: 24px !important;
+  font-size: 0.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Itens do menu dropdown */
+.pagination-select :deep(.v-list-item),
+.pagination-select :deep(.v-list-item--density-compact) {
+  min-height: 20px !important;
+  height: 20px !important;
+  padding: 0 4px !important;
+  font-size: 0.65rem !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+/* Título dos itens */
+.pagination-select :deep(.v-list-item__title) {
+  font-size: 0.65rem !important;
+  line-height: 1 !important;
+}
+
+/* Container externo do menu dropdown */
+.pagination-select :deep(.v-overlay__content) {
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid black !important;
+  border-radius: 0 !important;
+  max-width: 60px !important;
+}
+
+/* Styles for the pagination footer buttons */
+.odometer-table :deep(.v-pagination__list) {
+  gap: 0 !important; /* Remove gap between buttons */
+  display: flex !important; /* Enable flexbox */
+  align-items: center !important; /* Vertically center items */
+}
+
+.odometer-table :deep(.v-pagination__item),
+.odometer-table :deep(.v-pagination__navigation) {
+  margin: 0 !important; /* Remove default margins */
+  border-radius: 0 !important; /* Remove rounded corners */
+  border: 1px solid black !important; /* Add black border */
+  background-color: white !important; /* White background */
+  color: black !important; /* Black text color */
+  font-weight: normal !important; /* Not bold */
+  min-width: 24px !important; /* Further reduce width */
+  height: 24px !important; /* Match row height */
+  padding: 0 2px !important; /* Adjust padding */
+  font-size: 0.7rem !important; /* Smaller font */
+  display: flex !important; /* Enable flexbox for centering content */
+  align-items: center !important; /* Vertically center content */
+  justify-content: center !important; /* Horizontally center content */
+  vertical-align: middle !important; /* Attempt to vertically align */
+}
+
+.odometer-table :deep(.v-pagination__item .v-btn__content) { /* Target the text content inside the button */
+  font-size: 0.7rem !important; /* Smaller font */
+  font-weight: normal !important; /* Ensure not bold */
+}
+
+.odometer-table :deep(.v-pagination__item--is-active) {
+    background-color: #e0e0e0 !important; /* Gray background for active */
+    color: black !important;
+    border-color: black !important;
+}
+
+.odometer-table :deep(.v-pagination__navigation--disabled) {
+    opacity: 0.5 !important;
+}
 
 </style>
