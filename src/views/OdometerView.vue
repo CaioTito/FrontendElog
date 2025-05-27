@@ -104,6 +104,9 @@
       </v-data-table>
     </v-card>
   </v-container>
+
+  <!-- Notification Toast Component -->
+  <NotificationToast />
 </template>
 
 <script setup lang="ts">
@@ -112,7 +115,9 @@ import axios from 'axios'
 import dayjs from 'dayjs'
 import FilterModal from '../components/FilterModal.vue'
 import ColumnConfigModal from '../components/ColumnConfigModal.vue'
+import NotificationToast from '../components/NotificationToast.vue'
 import { useFilters } from '../composables/useFilters'
+import { useNotifications } from '../composables/useNotifications'
 
 interface OdometerItem {
   vehicleIdTms: string
@@ -128,6 +133,7 @@ interface OdometerItem {
 }
 
 const { filters } = useFilters()
+const { showError, showSuccess } = useNotifications()
 const showFilter = ref(false)
 const showConfigModal = ref(false)
 const data = ref<OdometerItem[]>([])
@@ -195,8 +201,44 @@ async function fetchData(filtersRaw = filters.value) {
     data.value = res.data.data
     totalItems.value = res.data.totalItems || res.data.data.length
     console.log('totalItems:', totalItems.value, 'filters.rows:', filters.value.rows)
-  } catch (error) {
+    
+    // Optional: Show success message when data is loaded
+    // showSuccess('Dados Carregados', `${totalItems.value} registros encontrados`)
+  } catch (error: any) {
     console.error('Erro ao carregar dados:', error)
+    
+    // Extract error message from different possible error structures
+    let errorMessage = 'Erro desconhecido ao carregar os dados'
+    let errorTitle = 'Erro na Requisição'
+    
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status
+      const data = error.response.data
+      
+      errorTitle = `Erro ${status}`
+      
+      if (typeof data === 'string') {
+        errorMessage = data
+      } else if (data?.message) {
+        errorMessage = data.message
+      } else if (data?.error) {
+        errorMessage = data.error
+      } else if (data?.title) {
+        errorMessage = data.title
+      } else {
+        errorMessage = `Erro ${status}: ${error.response.statusText}`
+      }
+    } else if (error.request) {
+      // Network error
+      errorTitle = 'Erro de Conexão'
+      errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.'
+    } else {
+      // Other error
+      errorMessage = error.message || 'Erro desconhecido'
+    }
+    
+    showError(errorTitle, errorMessage)
   } finally {
     loading.value = false
   }
