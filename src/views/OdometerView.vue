@@ -32,8 +32,6 @@
       @apply-config="updateVisibleColumns"
     />
 
-    {{ console.log('Valor de footer-props sendo passado:', { itemsPerPageOptions: [10, 25, 50, 100], showFirstLastPage: true, showCurrentPage: true }) }}
-
     <v-card elevation="2">
       <v-data-table
         :items="data"
@@ -76,9 +74,7 @@
                   class="ml-2 pagination-select"
                   style="width: 50px; min-width: 50px;"
                   @update:modelValue="newValue => {
-                    console.log('Handler Select - novo valor recebido:', newValue);
                     tableOptions.itemsPerPage = newValue;
-                    console.log('Handler Select - tableOptions.itemsPerPage após setar:', tableOptions.itemsPerPage);
                   }"
                 ></v-select>
               </div>
@@ -93,9 +89,7 @@
                 :total-visible="5"
                 density="compact"
                 @update:modelValue="newPage => {
-                  console.log('Handler Pagination - novo valor recebido:', newPage);
                   tableOptions.page = newPage;
-                  console.log('Handler Pagination - tableOptions.page após setar:', tableOptions.page);
                 }"
               ></v-pagination>
             </v-col>
@@ -178,7 +172,6 @@ const allHeaders = [
 ];
 
 watch(tableOptions, (newOptions) => {
-  console.log('Watcher - tableOptions mudou (via v-model:options):', newOptions)
   filters.value.page = newOptions.page
   filters.value.rows = newOptions.itemsPerPage
   fetchData()
@@ -196,17 +189,11 @@ async function fetchData(filtersRaw = filters.value) {
       Rows: filtersRaw.rows ?? 10,
       Page: filtersRaw.page ?? 1
     }
-    console.log('Parâmetros enviados para o backend:', params)
     const res = await axios.get('/api/odometer', { params })
     data.value = res.data.data
     totalItems.value = res.data.totalItems || res.data.data.length
-    console.log('totalItems:', totalItems.value, 'filters.rows:', filters.value.rows)
     
-    // Optional: Show success message when data is loaded
-    // showSuccess('Dados Carregados', `${totalItems.value} registros encontrados`)
-  } catch (error: any) {
-    console.error('Erro ao carregar dados:', error)
-    
+  } catch (error: any) {    
     // Extract error message from different possible error structures
     let errorMessage = 'Erro desconhecido ao carregar os dados'
     let errorTitle = 'Erro na Requisição'
@@ -259,7 +246,6 @@ onMounted(() => {
     try {
       headers.value = JSON.parse(savedHeaders);
     } catch (e) {
-      console.error('Failed to parse headers from localStorage', e);
       // Fallback to default headers if parsing fails
       headers.value = [
         { title: 'Frota', value: 'vehicleIdTms' },
