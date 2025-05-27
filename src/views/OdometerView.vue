@@ -59,6 +59,18 @@
           <span>{{ formatDate(item.dateProcess) }}</span>
         </template>
 
+        <template #item.odometerKm="{ item }">
+          <span>{{ formatOdometer(item.odometerKm) }}</span>
+        </template>
+
+        <template #item.speed="{ item }">
+          <span>{{ formatSpeed(item.speed) }}</span>
+        </template>
+
+        <template #item.driverName="{ item }">
+          <span>{{ formatDriverName(item.driverName) }}</span>
+        </template>
+
         <template #bottom>
           <v-row class="pa-2">
             <v-spacer></v-spacer>
@@ -269,6 +281,32 @@ function applyFilters(newFilters: any) {
   
   // Fetch data immediately when applying filters
   fetchData()
+}
+
+function formatOdometer(value: number | undefined): string {
+  if (value === undefined || value === null) {
+    return '-';
+  }
+  // Arredonda para 3 casas decimais, troca . por , e adiciona Km
+  return `${value.toFixed(3).replace('.', ',')} Km`;
+}
+
+function formatSpeed(value: number | undefined): string {
+  if (value === undefined || value === null) {
+    return '-';
+  }
+  return `${value} km/h`;
+}
+
+function formatDriverName(name: string | undefined): string {
+  if (!name || typeof name !== 'string') {
+    return '-'; // Ou string vazia, dependendo do que prefere para nomes nulos/inválidos
+  }
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 function formatDate(date: string) {
