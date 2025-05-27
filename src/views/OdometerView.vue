@@ -133,6 +133,7 @@ const showConfigModal = ref(false)
 const data = ref<OdometerItem[]>([])
 const loading = ref(false)
 const totalItems = ref(0)
+const isRequestInProgress = ref(false)
 
 const tableOptions = ref({
   page: 1,
@@ -186,7 +187,14 @@ watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) 
 })
 
 async function fetchData(filtersRaw = filters.value) {
+  // Prevent concurrent requests
+  if (isRequestInProgress.value) {
+    return
+  }
+  
+  isRequestInProgress.value = true
   loading.value = true
+  
   try {
     // Always use current table options for pagination
     const params = {
@@ -248,6 +256,7 @@ async function fetchData(filtersRaw = filters.value) {
     totalItems.value = 0
   } finally {
     loading.value = false
+    isRequestInProgress.value = false
   }
 }
 
@@ -258,7 +267,7 @@ function applyFilters(newFilters: any) {
   // Reset to first page when applying new filters
   tableOptions.value.page = 1
   
-  // Fetch data with new filters
+  // Fetch data immediately when applying filters
   fetchData()
 }
 
