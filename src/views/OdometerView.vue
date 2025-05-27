@@ -21,7 +21,7 @@
       :open="showFilter"
       :model-value="filters"
       @update:open="showFilter = $event"
-      @apply="fetchData"
+      @apply="applyFilters"
     />
 
     <ColumnConfigModal
@@ -171,27 +171,44 @@ const allHeaders = [
   { title: 'Data de Processamento', value: 'dateProcess' }
 ];
 
-watch(tableOptions, (newOptions) => {
-  filters.value.page = newOptions.page
-  filters.value.rows = newOptions.itemsPerPage
-  fetchData()
-}, { deep: true })
+// Watch for page changes
+watch(() => tableOptions.value.page, (newPage, oldPage) => {
+  if (oldPage !== undefined && newPage !== oldPage) {
+    fetchData()
+  }
+})
+
+// Watch for items per page changes
+watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) => {
+  if (oldItemsPerPage !== undefined && newItemsPerPage !== oldItemsPerPage) {
+    fetchData()
+  }
+})
 
 async function fetchData(filtersRaw = filters.value) {
   loading.value = true
   try {
+    // Always use current table options for pagination
     const params = {
       StartDate: filtersRaw.startDate,
       EndDate: filtersRaw.endDate,
       IdTms: filtersRaw.fleet,
       LicensePlate: filtersRaw.licensePlate,
       DivisionId: filtersRaw.division,
-      Rows: filtersRaw.rows ?? 10,
-      Page: filtersRaw.page ?? 1
+      Rows: tableOptions.value.itemsPerPage,
+      Page: tableOptions.value.page
     }
+    
     const res = await axios.get('/api/odometer', { params })
-    data.value = res.data.data
-    totalItems.value = res.data.totalItems || res.data.data.length
+    
+    // Handle API response format
+    if (res.data.data && Array.isArray(res.data.data)) {
+      data.value = res.data.data
+      totalItems.value = res.data.totalItems || 0
+    } else {
+      data.value = []
+      totalItems.value = 0
+    }
     
   } catch (error: any) {    
     // Extract error message from different possible error structures
@@ -226,9 +243,23 @@ async function fetchData(filtersRaw = filters.value) {
     }
     
     showError(errorTitle, errorMessage)
+    // Reset data on error
+    data.value = []
+    totalItems.value = 0
   } finally {
     loading.value = false
   }
+}
+
+function applyFilters(newFilters: any) {
+  // Update filters
+  filters.value = { ...filters.value, ...newFilters }
+  
+  // Reset to first page when applying new filters
+  tableOptions.value.page = 1
+  
+  // Fetch data with new filters
+  fetchData()
 }
 
 function formatDate(date: string) {
@@ -261,7 +292,8 @@ onMounted(() => {
       ];
     }
   }
-  fetchData(); // Fetch data after loading headers
+  
+  fetchData()
 })
 </script>
 
