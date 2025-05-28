@@ -117,13 +117,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import axios from 'axios'
 import dayjs from 'dayjs'
 import FilterModal from '../components/FilterModal.vue'
 import ColumnConfigModal from '../components/ColumnConfigModal.vue'
 import NotificationToast from '../components/NotificationToast.vue'
 import { useFilters } from '../composables/useFilters'
 import { useNotifications } from '../composables/useNotifications'
+import { fetchOdometerData } from '../services/apiService'
+import type { Ref } from 'vue'
 
 interface OdometerItem {
   vehicleIdTms: string
@@ -138,16 +139,47 @@ interface OdometerItem {
   dateProcess: string
 }
 
+interface SimpleTableHeader {
+  title: string
+  value: string
+  align?: 'start' | 'center' | 'end'
+  sortable?: boolean
+}
+
+interface CurrentTableOptionsInitialization {
+  page: number
+  itemsPerPage: number
+  sortBy: any[]
+  sortDesc: boolean[]
+  groupBy: any[]
+  groupDesc: boolean[]
+  multiSort: boolean
+  mustSort: boolean
+}
+
 const { filters } = useFilters()
 const { showError, showSuccess } = useNotifications()
-const showFilter = ref(false)
-const showConfigModal = ref(false)
+const showFilter = ref<boolean>(false)
+const showConfigModal = ref<boolean>(false)
 const data = ref<OdometerItem[]>([])
-const loading = ref(false)
-const totalItems = ref(0)
-const isRequestInProgress = ref(false)
+const loading = ref<boolean>(false)
+const totalItems = ref<number>(0)
+const isRequestInProgress = ref<boolean>(false)
 
-const tableOptions = ref({
+const ALL_POSSIBLE_ODOMETER_COLUMNS: ReadonlyArray<SimpleTableHeader> = [
+  { title: 'Frota', value: 'vehicleIdTms' },
+  { title: 'Operação', value: 'operationName' },
+  { title: 'Divisão', value: 'divisionName' },
+  { title: 'Placa', value: 'licensePlate' },
+  { title: 'Hodômetro', value: 'odometerKm' },
+  { title: 'Velocidade', value: 'speed' },
+  { title: 'Status Veículo', value: 'moving' },
+  { title: 'Status Ignição', value: 'ignitionStatus' },
+  { title: 'Motorista', value: 'driverName' },
+  { title: 'Data de Processamento', value: 'dateProcess' }
+]
+
+const tableOptions = ref<CurrentTableOptionsInitialization>({
   page: 1,
   itemsPerPage: 10,
   sortBy: [],
@@ -158,40 +190,15 @@ const tableOptions = ref({
   mustSort: false,
 })
 
-const headers = ref([
-  { title: 'Frota', value: 'vehicleIdTms' },
-  { title: 'Operação', value: 'operationName' },
-  { title: 'Divisão', value: 'divisionName' },
-  { title: 'Placa', value: 'licensePlate' },
-  { title: 'Hodômetro', value: 'odometerKm' },
-  { title: 'Velocidade', value: 'speed' },
-  { title: 'Status Veículo', value: 'moving' },
-  { title: 'Status Ignição', value: 'ignitionStatus' },
-  { title: 'Motorista', value: 'driverName' },
-  { title: 'Data de Processamento', value: 'dateProcess' }
-])
+const headers = ref<SimpleTableHeader[]>([...ALL_POSSIBLE_ODOMETER_COLUMNS])
+const allHeaders: SimpleTableHeader[] = [...ALL_POSSIBLE_ODOMETER_COLUMNS]
 
-const allHeaders = [
-  { title: 'Frota', value: 'vehicleIdTms' },
-  { title: 'Operação', value: 'operationName' },
-  { title: 'Divisão', value: 'divisionName' },
-  { title: 'Placa', value: 'licensePlate' },
-  { title: 'Hodômetro', value: 'odometerKm' },
-  { title: 'Velocidade', value: 'speed' },
-  { title: 'Status Veículo', value: 'moving' },
-  { title: 'Status Ignição', value: 'ignitionStatus' },
-  { title: 'Motorista', value: 'driverName' },
-  { title: 'Data de Processamento', value: 'dateProcess' }
-];
-
-// Watch for page changes
 watch(() => tableOptions.value.page, (newPage, oldPage) => {
   if (oldPage !== undefined && newPage !== oldPage) {
     fetchData()
   }
 })
 
-// Watch for items per page changes
 watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) => {
   if (oldItemsPerPage !== undefined && newItemsPerPage !== oldItemsPerPage) {
     fetchData()
@@ -199,7 +206,6 @@ watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) 
 })
 
 async function fetchData(filtersRaw = filters.value) {
-  // Prevent concurrent requests
   if (isRequestInProgress.value) {
     return
   }
@@ -208,7 +214,6 @@ async function fetchData(filtersRaw = filters.value) {
   loading.value = true
   
   try {
-    // Always use current table options for pagination
     const params = {
       StartDate: filtersRaw.startDate,
       EndDate: filtersRaw.endDate,
@@ -219,24 +224,21 @@ async function fetchData(filtersRaw = filters.value) {
       Page: tableOptions.value.page
     }
     
-    const res = await axios.get('/api/odometer', { params })
+    const responseData = await fetchOdometerData(params)
     
-    // Handle API response format
-    if (res.data.data && Array.isArray(res.data.data)) {
-      data.value = res.data.data
-      totalItems.value = res.data.totalItems || 0
+    if (responseData.data && Array.isArray(responseData.data)) {
+      data.value = responseData.data
+      totalItems.value = responseData.totalItems || 0
     } else {
       data.value = []
       totalItems.value = 0
     }
     
   } catch (error: any) {    
-    // Extract error message from different possible error structures
     let errorMessage = 'Erro desconhecido ao carregar os dados'
     let errorTitle = 'Erro na Requisição'
     
     if (error.response) {
-      // Server responded with error status
       const status = error.response.status
       const data = error.response.data
       
@@ -254,16 +256,13 @@ async function fetchData(filtersRaw = filters.value) {
         errorMessage = `Erro ${status}: ${error.response.statusText}`
       }
     } else if (error.request) {
-      // Network error
       errorTitle = 'Erro de Conexão'
       errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.'
     } else {
-      // Other error
       errorMessage = error.message || 'Erro desconhecido'
     }
     
     showError(errorTitle, errorMessage)
-    // Reset data on error
     data.value = []
     totalItems.value = 0
   } finally {
@@ -273,13 +272,10 @@ async function fetchData(filtersRaw = filters.value) {
 }
 
 function applyFilters(newFilters: any) {
-  // Update filters
   filters.value = { ...filters.value, ...newFilters }
   
-  // Reset to first page when applying new filters
   tableOptions.value.page = 1
   
-  // Fetch data immediately when applying filters
   fetchData()
 }
 
@@ -287,7 +283,6 @@ function formatOdometer(value: number | undefined): string {
   if (value === undefined || value === null) {
     return '-';
   }
-  // Arredonda para 3 casas decimais, troca . por , e adiciona Km
   return `${value.toFixed(3).replace('.', ',')} Km`;
 }
 
@@ -300,7 +295,7 @@ function formatSpeed(value: number | undefined): string {
 
 function formatDriverName(name: string | undefined): string {
   if (!name || typeof name !== 'string') {
-    return '-'; // Ou string vazia, dependendo do que prefere para nomes nulos/inválidos
+    return '-';
   }
   return name
     .toLowerCase()
@@ -313,7 +308,7 @@ function formatDate(date: string) {
   return dayjs(date).format('DD/MM/YYYY HH:mm')
 }
 
-function updateVisibleColumns(newVisibleColumns: any[]) {
+function updateVisibleColumns(newVisibleColumns: SimpleTableHeader[]) {
   headers.value = newVisibleColumns;
   localStorage.setItem('odometer-table-headers', JSON.stringify(newVisibleColumns));
 }
@@ -322,70 +317,65 @@ onMounted(() => {
   const savedHeaders = localStorage.getItem('odometer-table-headers');
   if (savedHeaders) {
     try {
-      headers.value = JSON.parse(savedHeaders);
+      const parsedSavedHeaders = JSON.parse(savedHeaders);
+      const validSavedHeaders = parsedSavedHeaders.filter((sh: any) => 
+        ALL_POSSIBLE_ODOMETER_COLUMNS.some(aph => aph.value === sh.value)
+      );
+      
+      if (validSavedHeaders.length > 0) {
+        headers.value = validSavedHeaders;
+      } else {
+        headers.value = [...ALL_POSSIBLE_ODOMETER_COLUMNS];
+      }
     } catch (e) {
-      // Fallback to default headers if parsing fails
-      headers.value = [
-        { title: 'Frota', value: 'vehicleIdTms' },
-        { title: 'Operação', value: 'operationName' },
-        { title: 'Divisão', value: 'divisionName' },
-        { title: 'Placa', value: 'licensePlate' },
-        { title: 'Hodômetro', value: 'odometerKm' },
-        { title: 'Velocidade', value: 'speed' },
-        { title: 'Status Veículo', value: 'moving' },
-        { title: 'Status Ignição', value: 'ignitionStatus' },
-        { title: 'Motorista', value: 'driverName' },
-        { title: 'Data de Processamento', value: 'dateProcess' }
-      ];
+      headers.value = [...ALL_POSSIBLE_ODOMETER_COLUMNS];
     }
+  } else {
+    headers.value = [...ALL_POSSIBLE_ODOMETER_COLUMNS];
   }
   
-  fetchData()
+  fetchData();
 })
 </script>
 
 <style scoped>
 .odometer-table :deep(table) {
-  border-collapse: collapse; /* Ensure borders touch */
+  border-collapse: collapse;
 }
 
-/* Styles for both header and body cells */
 .odometer-table :deep(th),
 .odometer-table :deep(td) {
-  border: 1px solid black !important; /* Black border */
-  min-height: 0px !important; /* Explicitly remove minimum height */
-  vertical-align: middle !important; /* Center content vertically */
-  line-height: 1.1 !important; /* Reduced line height */
-  height: 24px !important; /* Explicit height */
-  white-space: nowrap !important; /* Prevent text wrapping */
+  border: 1px solid black !important;
+  min-height: 0px !important;
+  vertical-align: middle !important;
+  line-height: 1.1 !important;
+  height: 24px !important;
+  white-space: nowrap !important;
 }
 
-/* Styles specifically for header cells */
 .odometer-table :deep(thead th) {
-  background-color: #e0e0e0; /* Fundo cinza claro */
-  font-weight: bold !important; /* Texto em negrito - make sure it's applied */
-  font-size: 0.7rem !important; /* Fonte menor */
+  background-color: #e0e0e0;
+  font-weight: bold !important;
+  font-size: 0.7rem !important;
 }
 
-/* Styles specifically for body cells */
 .odometer-table :deep(tbody td) {
-  font-size: 0.7rem !important; /* Fonte menor para células de dados */
+  font-size: 0.7rem !important;
 }
 
-/* Specific column widths to prevent wrapping */
 .odometer-table :deep(th[role="columnheader"][aria-label*="Motorista"]),
 .odometer-table :deep(td[data-label="driverName"]) {
-  min-width: 150px !important; /* Example width for Motorista */
+  min-width: 150px !important;
 }
 
 .odometer-table :deep(th[role="columnheader"][aria-label*="Processamento"]),
 .odometer-table :deep(td[data-label="dateProcess"]) {
-  min-width: 130px !important; /* Example width for Data de Processamento */
+  min-width: 130px !important;
 }
 
 .odometer-table :deep(th[role="columnheader"][aria-label*="Veículo"]),
 .odometer-table :deep(td[data-label="moving"]) {
-  min-width: 100px !important; /* Example width for Status Veículo */
+  min-width: 100px !important;
 }
 
 .pagination-select :deep(.v-field) {
@@ -402,7 +392,6 @@ onMounted(() => {
   min-width: 50px !important;
 }
 
-/* Campo visível */
 .pagination-select :deep(.v-field__input),
 .pagination-select :deep(.v-field__field),
 .pagination-select :deep(.v-select__selection-text) {
@@ -416,7 +405,6 @@ onMounted(() => {
   justify-content: space-between !important;
 }
 
-/* Ícone da seta */
 .pagination-select :deep(.v-field__append-inner),
 .pagination-select :deep(.v-icon) {
   padding: 0 !important;
@@ -428,7 +416,6 @@ onMounted(() => {
   justify-content: center !important;
 }
 
-/* Itens do menu dropdown */
 .pagination-select :deep(.v-list-item),
 .pagination-select :deep(.v-list-item--density-compact) {
   min-height: 20px !important;
@@ -441,13 +428,11 @@ onMounted(() => {
   justify-content: flex-start !important;
 }
 
-/* Título dos itens */
 .pagination-select :deep(.v-list-item__title) {
   font-size: 0.65rem !important;
   line-height: 1 !important;
 }
 
-/* Container externo do menu dropdown */
 .pagination-select :deep(.v-overlay__content) {
   padding: 0 !important;
   box-shadow: none !important;
@@ -456,38 +441,37 @@ onMounted(() => {
   max-width: 60px !important;
 }
 
-/* Styles for the pagination footer buttons */
 .odometer-table :deep(.v-pagination__list) {
-  gap: 0 !important; /* Remove gap between buttons */
-  display: flex !important; /* Enable flexbox */
-  align-items: center !important; /* Vertically center items */
+  gap: 0 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .odometer-table :deep(.v-pagination__item),
 .odometer-table :deep(.v-pagination__navigation) {
-  margin: 0 !important; /* Remove default margins */
-  border-radius: 0 !important; /* Remove rounded corners */
-  border: 1px solid black !important; /* Add black border */
-  background-color: white !important; /* White background */
-  color: black !important; /* Black text color */
-  font-weight: normal !important; /* Not bold */
-  min-width: 24px !important; /* Further reduce width */
-  height: 24px !important; /* Match row height */
-  padding: 0 2px !important; /* Adjust padding */
-  font-size: 0.7rem !important; /* Smaller font */
-  display: flex !important; /* Enable flexbox for centering content */
-  align-items: center !important; /* Vertically center content */
-  justify-content: center !important; /* Horizontally center content */
-  vertical-align: middle !important; /* Attempt to vertically align */
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: 1px solid black !important;
+  background-color: white !important;
+  color: black !important;
+  font-weight: normal !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  padding: 0 2px !important;
+  font-size: 0.7rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
 }
 
-.odometer-table :deep(.v-pagination__item .v-btn__content) { /* Target the text content inside the button */
-  font-size: 0.7rem !important; /* Smaller font */
-  font-weight: normal !important; /* Ensure not bold */
+.odometer-table :deep(.v-pagination__item .v-btn__content) {
+  font-size: 0.7rem !important;
+  font-weight: normal !important;
 }
 
 .odometer-table :deep(.v-pagination__item--is-active) {
-    background-color: #e0e0e0 !important; /* Gray background for active */
+    background-color: #e0e0e0 !important;
     color: black !important;
     border-color: black !important;
 }
