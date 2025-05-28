@@ -207,11 +207,10 @@ watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) 
 
 async function fetchData(filtersRaw = filters.value) {
   if (isRequestInProgress.value) {
-    return
+    return;
   }
-  
-  isRequestInProgress.value = true
-  loading.value = true
+  isRequestInProgress.value = true;
+  loading.value = true;
   
   try {
     const params = {
@@ -222,52 +221,27 @@ async function fetchData(filtersRaw = filters.value) {
       DivisionId: filtersRaw.division,
       Rows: tableOptions.value.itemsPerPage,
       Page: tableOptions.value.page
-    }
+    };
     
-    const responseData = await fetchOdometerData(params)
+    const responseData = await fetchOdometerData(params);
     
-    if (responseData.data && Array.isArray(responseData.data)) {
-      data.value = responseData.data
-      totalItems.value = responseData.totalItems || 0
+    if (responseData && responseData.data && Array.isArray(responseData.data)) {
+      data.value = responseData.data;
+      totalItems.value = responseData.totalItems || 0;
     } else {
-      data.value = []
-      totalItems.value = 0
+      console.warn('Dados recebidos da API não estão no formato esperado ou estão vazios. Resetando tabela.', responseData);
+      data.value = [];
+      totalItems.value = 0;
     }
     
-  } catch (error: any) {    
-    let errorMessage = 'Erro desconhecido ao carregar os dados'
-    let errorTitle = 'Erro na Requisição'
+  } catch (error) {
+    console.error('Erro capturado no componente OdometerView ao buscar dados:', error);
     
-    if (error.response) {
-      const status = error.response.status
-      const data = error.response.data
-      
-      errorTitle = `Erro ${status}`
-      
-      if (typeof data === 'string') {
-        errorMessage = data
-      } else if (data?.message) {
-        errorMessage = data.message
-      } else if (data?.error) {
-        errorMessage = data.error
-      } else if (data?.title) {
-        errorMessage = data.title
-      } else {
-        errorMessage = `Erro ${status}: ${error.response.statusText}`
-      }
-    } else if (error.request) {
-      errorTitle = 'Erro de Conexão'
-      errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.'
-    } else {
-      errorMessage = error.message || 'Erro desconhecido'
-    }
-    
-    showError(errorTitle, errorMessage)
-    data.value = []
-    totalItems.value = 0
+    data.value = [];
+    totalItems.value = 0;
   } finally {
-    loading.value = false
-    isRequestInProgress.value = false
+    loading.value = false;
+    isRequestInProgress.value = false;
   }
 }
 
