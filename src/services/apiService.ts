@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import type { OdometerRequest } from '../interfaces/request/odometerRequest';
 import type { OdometerApiResponse } from '../interfaces/response/odometerResponse';
 import { useNotifications } from '../composables/useNotifications';
@@ -8,6 +8,24 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: params => {
+    const parts: string[] = [];
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || typeof value === 'undefined') {
+        return;
+      }
+      if (Array.isArray(value)) {
+        if (value.length === 0) return;
+
+        value.forEach(val => {
+          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`);
+        });
+      } else {
+        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value as string | number | boolean)}`);
+      }
+    });
+    return parts.join('&');
+  }
 });
 
 /**
@@ -20,23 +38,30 @@ function extractErrorMessage(error: any): { title: string; message: string } {
     let message = 'Ocorreu um erro desconhecido ao processar sua solicitação.';
   
     if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const data = error.response?.data;
-  
-      if (status) {
+      const axiosError = error as AxiosError<any>;
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const responseData = axiosError.response.data;
         title = `Erro ${status}`;
-        message =
-          typeof data === 'string' ? data :
-          data?.message ??
-          data?.title ??
-          data?.error ??
-          error.message ??
-          `O servidor respondeu com o status ${status}.`;
-      } else if (error.request) {
+  
+        if (typeof responseData === 'string') {
+          message = responseData;
+        } else if (responseData && typeof responseData.message === 'string') {
+          message = responseData.message;
+        } else if (responseData && typeof responseData.title === 'string') {
+          message = responseData.title; 
+        } else if (responseData && typeof responseData.error === 'string') {
+          message = responseData.error;
+        } else if (axiosError.message) {
+          message = axiosError.message;
+        } else {
+          message = `O servidor respondeu com o status ${status}.`;
+        }
+      } else if (axiosError.request) {
         title = 'Erro de Conexão';
         message = 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet ou tente novamente mais tarde.';
       } else {
-        message = error.message || 'Erro ao configurar a requisição.';
+        message = axiosError.message || 'Erro ao configurar a requisição.';
       }
     } else if (error instanceof Error) {
       message = error.message;

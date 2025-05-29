@@ -3,11 +3,12 @@ import dayjs from 'dayjs'
 import FilterModal from '../../components/FilterModal/FilterModal.vue'
 import ColumnConfigModal from '../../components/ColumnConfigModal/ColumnConfigModal.vue'
 import NotificationToast from '../../components/NotificationToast/NotificationToast.vue'
-import { useFilters } from '../../composables/useFilters'
+import { useFilters, FilterState } from '../../composables/useFilters'
 import { useNotifications } from '../../composables/useNotifications'
 import { fetchOdometerData } from '../../services/apiService'
 import type { OdometerDataItem } from '../../interfaces/response/odometerResponse'
 import type { SimpleTableHeader, CurrentTableOptionsInitialization } from '../../interfaces/uiTypes'
+import type { OdometerRequest } from '../../interfaces/request/odometerRequest'
 
 export default {
   name: 'OdometerView',
@@ -18,7 +19,7 @@ export default {
   },
   setup() {
     const { filters } = useFilters()
-    const { showError, showSuccess } = useNotifications() // showSuccess não está sendo usado, pode ser removido se não planeja usá-lo.
+    const { showError } = useNotifications()
     const showFilter = ref<boolean>(false)
     const showConfigModal = ref<boolean>(false)
     const data = ref<OdometerDataItem[]>([])
@@ -51,21 +52,21 @@ export default {
     })
 
     const headers = ref<SimpleTableHeader[]>([...ALL_POSSIBLE_ODOMETER_COLUMNS])
-    const allHeaders: SimpleTableHeader[] = [...ALL_POSSIBLE_ODOMETER_COLUMNS] // Esta não precisa ser reativa se for apenas uma cópia da constante.
+    const allHeaders: SimpleTableHeader[] = [...ALL_POSSIBLE_ODOMETER_COLUMNS]
 
     watch(() => tableOptions.value.page, (newPage, oldPage) => {
       if (oldPage !== undefined && newPage !== oldPage) {
-        fetchData()
+        fetchData(filters.value)
       }
     })
 
     watch(() => tableOptions.value.itemsPerPage, (newItemsPerPage, oldItemsPerPage) => {
       if (oldItemsPerPage !== undefined && newItemsPerPage !== oldItemsPerPage) {
-        fetchData()
+        fetchData(filters.value)
       }
     })
 
-    async function fetchData(filtersRaw = filters.value) {
+    async function fetchData(filtersToUse: FilterState) {
       if (isRequestInProgress.value) {
         return;
       }
@@ -73,17 +74,28 @@ export default {
       loading.value = true;
       
       try {
-        const params = {
-          StartDate: filtersRaw.startDate,
-          EndDate: filtersRaw.endDate,
-          IdTms: filtersRaw.fleet,
-          LicensePlate: filtersRaw.licensePlate,
-          DivisionId: filtersRaw.division,
+        const apiParams: Partial<OdometerRequest> = {
+          StartDate: filtersToUse.startDate,
+          EndDate: filtersToUse.endDate,
+          IdTms: filtersToUse.idTms,
+          LicensePlate: filtersToUse.licensePlate,
+          DivisionId: filtersToUse.divisionId,
           Rows: tableOptions.value.itemsPerPage,
           Page: tableOptions.value.page
         };
+
+        Object.keys(apiParams).forEach(key => {
+          const k = key as keyof OdometerRequest;
+          const value = apiParams[k];
+          if (value === undefined || (Array.isArray(value) && value.length === 0)) {
+            delete apiParams[k];
+          }
+        });
         
-        const responseData = await fetchOdometerData(params);
+        apiParams.Rows = apiParams.Rows ?? tableOptions.value.itemsPerPage;
+        apiParams.Page = apiParams.Page ?? tableOptions.value.page;
+
+        const responseData = await fetchOdometerData(apiParams as OdometerRequest);
         
         if (responseData && responseData.data && Array.isArray(responseData.data)) {
           data.value = responseData.data;
@@ -104,10 +116,13 @@ export default {
       }
     }
 
-    function applyFilters(newFilters: any) {
-      filters.value = { ...filters.value, ...newFilters }
-      tableOptions.value.page = 1
-      fetchData()
+    function applyFilters(newFiltersFromModal: Partial<FilterState>) {
+      filters.value = { 
+        ...filters.value, 
+        ...newFiltersFromModal 
+      };
+      tableOptions.value.page = 1;
+      fetchData(filters.value);
     }
 
     function formatOdometer(value: number | undefined): string {
@@ -149,7 +164,6 @@ export default {
       if (savedHeaders) {
         try {
           const parsedSavedHeaders = JSON.parse(savedHeaders);
-          // Validação mais robusta dos cabeçalhos salvos
           const validSavedHeaders = parsedSavedHeaders.filter((sh: any) => 
             typeof sh.title === 'string' && 
             typeof sh.value === 'string' &&
@@ -169,29 +183,28 @@ export default {
         headers.value = [...ALL_POSSIBLE_ODOMETER_COLUMNS];
       }
       
-      fetchData();
+      fetchData(filters.value);
     });
 
     return {
-      filters, // Expor para o template se usado diretamente
-      showError, // Expor se usado no template
+      filters,
+      showError,
       showFilter,
       showConfigModal,
       data,
       loading,
       totalItems,
-      // isRequestInProgress não precisa ser exposto se for lógica interna
-      ALL_POSSIBLE_ODOMETER_COLUMNS, // Expor se usado no template (para props, etc)
+      ALL_POSSIBLE_ODOMETER_COLUMNS,
       tableOptions,
       headers,
-      allHeaders, // Expor para prop do ColumnConfigModal
+      allHeaders,
       applyFilters,
       formatOdometer,
       formatSpeed,
       formatDriverName,
       formatDate,
       updateVisibleColumns,
-      fetchData // Expor se chamado pelo template (embora seja mais comum ser chamado internamente)
+      fetchData
     };
   }
 } 

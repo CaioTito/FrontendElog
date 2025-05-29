@@ -18,7 +18,7 @@
               label="Data inicial"
               v-model="localFilters.startDate"
               type="date"
-              dense
+              density="compact"
             />
           </v-col>
           <v-col cols="2" class="d-flex align-center justify-center">
@@ -29,16 +29,36 @@
               label="Data final"
               v-model="localFilters.endDate"
               type="date"
-              dense
+              density="compact"
             />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="6">
-            <v-text-field label="Frota" v-model="localFilters.fleet" />
+            <v-combobox
+              label="Frota"
+              v-model="localFilters.idTms"
+              multiple
+              chips
+              closable-chips
+              clearable
+              density="compact"
+              hint="Pressione Enter para adicionar múltiples frotas"
+              persistent-hint
+            ></v-combobox>
           </v-col>
           <v-col cols="6">
-            <v-text-field label="Placa" v-model="localFilters.licensePlate" />
+            <v-combobox
+              label="Placa"
+              v-model="localFilters.licensePlate"
+              multiple
+              chips
+              closable-chips
+              clearable
+              density="compact"
+              hint="Pressione Enter para adicionar múltiples placas"
+              persistent-hint
+            ></v-combobox>
           </v-col>
         </v-row>
         <v-row>
@@ -48,8 +68,12 @@
               :items="divisions"
               item-value="id"
               item-title="label"
-              v-model="localFilters.division"
-              dense
+              v-model="localFilters.divisionId"
+              multiple
+              chips
+              closable-chips
+              clearable
+              density="compact"
             />
           </v-col>
         </v-row>
