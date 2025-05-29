@@ -124,44 +124,14 @@ import NotificationToast from '../components/NotificationToast.vue'
 import { useFilters } from '../composables/useFilters'
 import { useNotifications } from '../composables/useNotifications'
 import { fetchOdometerData } from '../services/apiService'
-import type { Ref } from 'vue'
-
-interface OdometerItem {
-  vehicleIdTms: string
-  operationName: string
-  divisionName: string
-  licensePlate: string
-  odometerKm: number
-  speed: number
-  moving: boolean
-  ignitionStatus: string
-  driverName: string
-  dateProcess: string
-}
-
-interface SimpleTableHeader {
-  title: string
-  value: string
-  align?: 'start' | 'center' | 'end'
-  sortable?: boolean
-}
-
-interface CurrentTableOptionsInitialization {
-  page: number
-  itemsPerPage: number
-  sortBy: any[]
-  sortDesc: boolean[]
-  groupBy: any[]
-  groupDesc: boolean[]
-  multiSort: boolean
-  mustSort: boolean
-}
+import type { OdometerDataItem } from '../interfaces/response/odometerResponse'
+import type { SimpleTableHeader, CurrentTableOptionsInitialization } from '../interfaces/uiTypes'
 
 const { filters } = useFilters()
 const { showError, showSuccess } = useNotifications()
 const showFilter = ref<boolean>(false)
 const showConfigModal = ref<boolean>(false)
-const data = ref<OdometerItem[]>([])
+const data = ref<OdometerDataItem[]>([])
 const loading = ref<boolean>(false)
 const totalItems = ref<number>(0)
 const isRequestInProgress = ref<boolean>(false)
