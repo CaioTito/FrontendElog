@@ -1,0 +1,40 @@
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.notification-toast {
+  pointer-events: auto;
+  margin-bottom: 10px;
+}
+
+.notification-content {
+  width: 100%;
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notification-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.notification-message {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  max-width: 300px;
+}
+
+/* Override Vuetify snackbar positioning for multiple toasts */
+.notification-toast :deep(.v-snackbar__wrapper) {
+  position: relative !important;
+  margin-bottom: 10px;
+} 

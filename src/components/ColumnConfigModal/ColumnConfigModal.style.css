@@ -1,0 +1,136 @@
+.v-card-title {
+  padding: 12px 16px !important;
+}
+
+.v-card-text {
+  padding: 16px !important;
+}
+
+.text-subtitle-1 {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+}
+
+.v-select {
+    font-size: 0.8rem !important;
+    max-width: 220px !important;
+}
+
+.v-select :deep(.v-field) {
+  box-shadow: none !important;
+}
+
+.v-select :deep(.v-field__field) {
+  padding: 4px 10px !important;
+  min-height: unset !important;
+}
+
+/* New rule for text inside the v-select box (placeholder/selected value) */
+.v-select :deep(.v-field__input) {
+  font-size: 0.75rem !important;
+}
+
+/* Additional rules to ensure font size is applied to all v-select text elements */
+.v-select :deep(.v-field__input input) {
+  font-size: 0.75rem !important;
+}
+
+.v-select :deep(.v-select__selection) {
+  font-size: 0.75rem !important;
+}
+
+.v-select :deep(.v-field__input .v-field__field) {
+  font-size: 0.75rem !important;
+}
+
+.v-select :deep(.v-field__overlay) {
+  font-size: 0.75rem !important;
+}
+
+/* Force font size on the entire v-select component */
+.v-select :deep(*) {
+  font-size: 0.75rem !important;
+}
+
+.v-btn[size="x-small"] {
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+}
+
+.v-btn[size="x-small"] .v-icon {
+    font-size: 1rem !important;
+}
+
+.column-list {
+    padding: 0 !important;
+    max-width: 264px !important;
+}
+
+.column-item {
+    border: 1px solid black !important;
+    margin-bottom: -1px;
+    padding: 4px 12px !important;
+    min-height: unset !important;
+    font-weight: normal !important;
+    background-color: white !important;
+}
+
+.column-item:hover, 
+.column-item:focus, 
+.column-item.v-list-item--active {
+    font-weight: normal !important;
+    background-color: white !important;
+    color: inherit !important;
+}
+
+.column-item:first-child {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.column-item:last-child {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    margin-bottom: 0;
+}
+
+.column-item :deep(.v-list-item-title) {
+    font-size: 0.9rem !important;
+    font-weight: normal !important;
+}
+
+/* New rule for items in the v-select dropdown list */
+:deep(div[role="listbox"] .v-list-item-title) {
+  font-size: 0.7rem !important;
+}
+
+.v-card-actions .v-btn {
+    padding: 0 16px !important;
+}
+
+/* Unscoped styles moved here - Vue 3 SFCs with src imports for styles only support scoped or module styles.
+   For unscoped (global) styles, they should typically be in a global CSS file or handled differently.
+   If these are truly necessary as unscoped AND tied to this component, this separation might be problematic
+   without further adjustments to how global styles are loaded or by using <style> tags directly in the .vue file.
+   For now, I will include them here, but be aware they will be treated as scoped if this file is linked via <style scoped src="..."> */
+
+/* Target the v-select dropdown menu items */
+.v-overlay .v-list .v-list-item-title {
+  font-size: 0.75rem !important;
+}
+
+/* Target all text in v-select dropdown */
+.v-overlay .v-list-item {
+  font-size: 0.75rem !important;
+}
+
+/* More specific targeting for v-select dropdown */
+.v-menu .v-list .v-list-item-title {
+  font-size: 0.75rem !important;
+}
+
+/* Target the entire dropdown content */
+.v-menu .v-list-item {
+  font-size: 0.75rem !important;
+} 

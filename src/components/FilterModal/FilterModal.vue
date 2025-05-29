@@ -61,49 +61,7 @@
   </v-dialog>
 </template>
 
-<script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-
-const props = defineProps({
-  open: Boolean,
-  modelValue: Object
-})
-
-const emit = defineEmits(['update:open', 'apply'])
-
-const dialog = computed({
-  get: () => props.open,
-  set: (value) => emit('update:open', value)
-})
-
-const localFilters = ref({
-  startDate: '',
-  endDate: '',
-  fleet: '',
-  licensePlate: '',
-  division: '',
-  ...props.modelValue
-})
-
-const divisions = [
-  { id: 39, label: 'Citrosuco' },
-  { id: 42, label: 'GLP' },
-  { id: 45, label: 'Amônia' },
-  { id: 46, label: 'Máquinas' },
-  { id: 55, label: 'Ácido' },
-  { id: 58, label: 'Treinamento' }
-]
-
-watch(() => props.modelValue, v => {
-  localFilters.value = { ...localFilters.value, ...v }
-})
-
-function closeModal() {
-  dialog.value = false
-}
-
-function apply() {
-  emit('apply', localFilters.value)
-  closeModal()
-}
-</script>
+<script lang="ts" src="./FilterModal.script.ts"></script>
+<!-- Não há arquivo de estilo separado, pois o original não tinha estilos. -->
+<!-- Se estilos forem adicionados, criar FilterModal.style.css e descomentar a linha abaixo -->
+<!-- <style scoped src="./FilterModal.style.css"></style> --> 

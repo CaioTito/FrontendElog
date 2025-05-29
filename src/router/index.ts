@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import OdometerView from '../views/OdometerView.vue'
+import OdometerView from '../views/OdometerView/OdometerView.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
