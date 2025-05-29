@@ -1,0 +1,19 @@
+# Ignore node_modules, as they will be installed in the Docker image
+node_modules
+
+# Ignore build output, as it will be generated in the Docker image
+dist
+
+# Ignore .git directory
+.git
+
+# Ignore .env files (if you use them for local development)
+.env*
+
+# Ignore Dockerfile and .dockerignore itself (they are not needed in the image)
+Dockerfile
+.dockerignore
+
+# Ignore any IDE-specific files
+.vscode/
+.idea/ 
