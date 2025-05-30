@@ -75,8 +75,8 @@ export default {
       
       try {
         const apiParams: Partial<OdometerRequest> = {
-          StartDate: filtersToUse.startDate,
-          EndDate: filtersToUse.endDate,
+          StartDate: filtersToUse.startDate ?? undefined,
+          EndDate: filtersToUse.endDate ?? undefined,
           IdTms: filtersToUse.idTms,
           LicensePlate: filtersToUse.licensePlate,
           DivisionId: filtersToUse.divisionId,

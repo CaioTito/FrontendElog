@@ -8,9 +8,9 @@ export interface SimpleTableHeader {
 export interface CurrentTableOptionsInitialization {
   page: number;
   itemsPerPage: number;
-  sortBy: any[]; // Pode ser mais específico se os valores de sortBy forem conhecidos
+  sortBy: any[]; 
   sortDesc: boolean[];
-  groupBy: any[]; // Pode ser mais específico se os valores de groupBy forem conhecidos
+  groupBy: any[]; 
   groupDesc: boolean[];
   multiSort: boolean;
   mustSort: boolean;
